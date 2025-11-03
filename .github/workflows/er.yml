@@ -125,7 +125,7 @@ jobs:
           repo init -u https://github.com/showdo/kernel_manifest.git -b refs/heads/oneplus/sm8750 -m ${{ env.REPO_MANIFEST }}.xml --depth=1
           repo sync -c -j$(nproc --all) --no-tags
           rm -f kernel_platform/common/android/abi_gki_protected_exports_* kernel_platform/msm-kernel/android/abi_gki_protected_exports_*
-      - name: 安装SukiSU
+      - name: 安装SukiSU Ultra
         run: |
           cd kernel_workspace/kernel_platform
           curl -LSs https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/susfs-main/kernel/setup.sh | bash -s susfs-main
@@ -183,25 +183,19 @@ jobs:
           sudo sed -i '/check_defconfig/d' common/build.config.gki
           git -C common add -A
           git -C common commit -m "BUILD Kernel" || true
-      - name: 备份配置
-        run: |
-          cp -r kernel_workspace/kernel_platform/common/arch/arm64/configs/* ${{ env.BACKUP_DIR }}/config/
-      - name: 备份LZ4
-        run: |
-          cp -r kernel_workspace/kernel_platform/common/lib/lz4/* ${{ env.BACKUP_DIR }}/lz4/ 2>/dev/null || true
-      - name: 风驰调度
+      - name: 风驰调度（零冲突版）
         if: ${{ github.event.inputs.enable_feature_z }}
         run: |
           cd kernel_workspace/kernel_platform/common/kernel
-          git clone --depth=1 https://github.com/sched-ext/sched_ext.git
+          git clone --depth=1 https://github.com/sched-ext/scx sched_ext
           cp -r sched_ext/sched/* sched/
+          rm -rf sched_ext
+          echo 'obj-y += ext/' >> sched/Makefile
           cat <<'EOF' >> sched/Kconfig
           menu "Sched_ext schedulers"
           source "kernel/sched/ext/Kconfig"
           endmenu
           EOF
-          echo 'obj-y += ext/' >> sched/Makefile
-          curl -LSs https://raw.githubusercontent.com/sched-ext/sched_ext/main/patch/6.6.patch | patch -p1 || true
           echo "CONFIG_SCHED_CLASS_EXT=y" >> ../arch/arm64/configs/gki_defconfig
           echo "CONFIG_SCHED_EXT=y" >> ../arch/arm64/configs/gki_defconfig
       - name: 内核名称
@@ -246,14 +240,8 @@ jobs:
           run_id=$(gh api "repos/SukiSU-Ultra/SukiSU-Ultra/actions/workflows/build-manager.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].id')
           [ -n "$run_id" ] && gh api "repos/SukiSU-Ultra/SukiSU-Ultra/actions/runs/$run_id/artifacts" | jq -r '.artifacts[]|select(.name=="manager")|.archive_download_url' | head -1 | xargs -I{} curl -H "Authorization: token $GITHUB_TOKEN" -L {} -o mgr.zip
           [ -f mgr.zip ] && unzip -j mgr.zip "*.apk" -d AnyKernel3/
-      - name: 上传备份
-        uses: actions/upload-artifact@v4
-        with:
-          name: backup_${{ env.DEVICES_NAME }}_${{ github.run_id }}
-          path: ${{ env.BACKUP_DIR }}/**
-          retention-days: 30
       - name: 上传刷包
         uses: actions/upload-artifact@v4
         with:
-          name: AK3_${{ env.KSUVER }}_${{ env.DEVICES_NAME }}${{ github.event.inputs.KPM == 'true' && '_KPM' || '' }}${{ github.event.inputs.enable_feature_z == 'true' && '_FengChi' || '' }}
+          name: SukiSU_${{ env.KSUVER }}_${{ env.DEVICES_NAME }}${{ github.event.inputs.KPM == 'true' && '_KPM' || '' }}${{ github.event.inputs.enable_feature_z == 'true' && '_FengChi' || '' }}
           path: AnyKernel3/*
