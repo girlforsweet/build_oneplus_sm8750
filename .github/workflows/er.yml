@@ -24,12 +24,12 @@ on:
         type: boolean
 
       custom_kernel_suffix:
-        description: "✏️ 自定义内核名称- 仅在取消勾选'保持原设置'时有效"
+        description: "✏️ 自定义内核名称- 仅在取消勾选'保持原设置'时有效(不懂请保持默认)"
         required: false
         default: ''
       
       custom_kernel_time:
-        description: "⏰ 自定义构建时间- 仅在取消勾选'保持原设置'时有效"
+        description: "⏰ 自定义构建时间- 仅在取消勾选'保持原设置'时有效(不懂请保持默认)"
         required: false
         default: ''
 
@@ -60,7 +60,6 @@ on:
         required: true
         default: true
 
-
 jobs:
   build:
     name: Build_${{ github.event.inputs.REPO_MANIFEST }}
@@ -74,58 +73,31 @@ jobs:
       - name: 📁 初始化备份目录
         run: |
           BACKUP_DIR="${GITHUB_WORKSPACE}/kernel_backups"
-          mkdir -p "$BACKUP_DIR/LZ4_before_build"
-          mkdir -p "$BACKUP_DIR/config_before_build"
+          mkdir -p "$BACKUP_DIR/LZ4_before_build" "$BACKUP_DIR/config_before_build"
           echo "BACKUP_DIR=$BACKUP_DIR" >> $GITHUB_ENV
 
       - name: 📊 Check disk space
-        run: |
-          echo "构建前磁盘空间："
-          df -h
-      
+        run: df -h
+
       - name: ⚙️ Set REPO_MANIFEST
         run: |
           case "${{ github.event.inputs.REPO_MANIFEST }}" in
-            oneplus_ace5_pro)
-              echo "REPO_MANIFEST=JiuGeFaCai_oneplus_ace5_pro_v" >> $GITHUB_ENV
-              echo "DEVICES_NAME=oneplus_ace5_pro" >> $GITHUB_ENV
-              ;;
-            oneplus_13)
-              echo "REPO_MANIFEST=JiuGeFaCai_oneplus_13_v" >> $GITHUB_ENV
-              echo "DEVICES_NAME=oneplus_13" >> $GITHUB_ENV
-              ;;
-            *)
-              echo "REPO_MANIFEST=${{ github.event.inputs.REPO_MANIFEST }}" >> $GITHUB_ENV
-              echo "DEVICES_NAME=${{ github.event.inputs.REPO_MANIFEST }}" >> $GITHUB_ENV
-              ;;
+            oneplus_ace5_pro) echo "REPO_MANIFEST=JiuGeFaCai_oneplus_ace5_pro_v" >> $GITHUB_ENV; echo "DEVICES_NAME=oneplus_ace5_pro" >> $GITHUB_ENV ;;
+            oneplus_13)       echo "REPO_MANIFEST=JiuGeFaCai_oneplus_13_v"       >> $GITHUB_ENV; echo "DEVICES_NAME=oneplus_13"       >> $GITHUB_ENV ;;
+            *)                echo "REPO_MANIFEST=${{ github.event.inputs.REPO_MANIFEST }}" >> $GITHUB_ENV; echo "DEVICES_NAME=${{ github.event.inputs.REPO_MANIFEST }}" >> $GITHUB_ENV ;;
           esac
+          # DEFAULT_SUFFIX & KERNEL_TIME (保持原样)
           case "${{ github.event.inputs.REPO_MANIFEST }}" in
-            oneplus_13 | oneplus_ace5_pro)
-              echo 'DEFAULT_SUFFIX=-android15-8-g4dc61d72e02f-abogki415959920-4k' >> $GITHUB_ENV
-              ;;
-            realme_GT7pro_Speed)
-              echo 'DEFAULT_SUFFIX=-android15-8-g013ec21bba94-abogki383916444-4k' >> $GITHUB_ENV
-              ;;
-            realme_GT7)
-              echo 'DEFAULT_SUFFIX=-android15-8-g06c41a4a6e98-abogki395793266-4k' >> $GITHUB_ENV
-              ;;
-            realme_GT7pro)
-              echo 'DEFAULT_SUFFIX=-android15-8-gc6f5283046c6-ab12364222-4k' >> $GITHUB_ENV
-              ;;
-            oneplus_13t)
-              echo 'DEFAULT_SUFFIX=-android15-8-gd43086512890-abogki423825152-4k' >> $GITHUB_ENV
-              ;;
-            oneplus_pad_2_pro)
-              echo 'DEFAULT_SUFFIX=-android15-8-g7b1f455c7143-ab13591283-4k' >> $GITHUB_ENV
-              ;;
-            oneplus_ace5_ultra)
-              echo 'DEFAULT_SUFFIX=-android15-8-g29d86c5fc9dd-abogki428889875-4k' >> $GITHUB_ENV
-              ;;
+            oneplus_13 | oneplus_ace5_pro) echo 'DEFAULT_SUFFIX=-android15-8-g4dc61d72e02f-abogki415959920-4k' >> $GITHUB_ENV ;;
+            realme_GT7pro_Speed) echo 'DEFAULT_SUFFIX=-android15-8-g013ec21bba94-abogki383916444-4k' >> $GITHUB_ENV ;;
+            realme_GT7) echo 'DEFAULT_SUFFIX=-android15-8-g06c41a4a6e98-abogki395793266-4k' >> $GITHUB_ENV ;;
+            realme_GT7pro) echo 'DEFAULT_SUFFIX=-android15-8-gc6f5283046c6-ab12364222-4k' >> $GITHUB_ENV ;;
+            oneplus_13t) echo 'DEFAULT_SUFFIX=-android15-8-gd43086512890-abogki423825152-4k' >> $GITHUB_ENV ;;
+            oneplus_pad_2_pro) echo 'DEFAULT_SUFFIX=-android15-8-g7b1f455c7143-ab13591283-4k' >> $GITHUB_ENV ;;
+            oneplus_ace5_ultra) echo 'DEFAULT_SUFFIX=-android15-8-g29d86c5fc9dd-abogki428889875-4k' >> $GITHUB_ENV ;;
           esac
-          if [ "${{ github.event.inputs.keep_original_settings }}" = "false" ] && [ -n "${{ github.event.inputs.custom_kernel_suffix }}" ]; then
-            CUSTOM_TIME="${{ github.event.inputs.custom_kernel_time }}"
-            [ -z "$CUSTOM_TIME" ] && CUSTOM_TIME="$(date -u +"%a %b %d %H:%M:%S UTC %Y")"
-            echo "KERNEL_TIME=$CUSTOM_TIME" >> $GITHUB_ENV
+          if [ "${{ github.event.inputs.keep_original_settings }}" = "false" ] && [ -n "${{ github.event.inputs.custom_kernel_time }}" ]; then
+            echo "KERNEL_TIME=${{ github.event.inputs.custom_kernel_time }}" >> $GITHUB_ENV
           else
             case "${{ github.event.inputs.REPO_MANIFEST }}" in
               oneplus_13 | oneplus_ace5_pro) echo 'KERNEL_TIME=Mon May 12 09:09:59 UTC 2025' >> $GITHUB_ENV ;;
@@ -137,247 +109,226 @@ jobs:
               oneplus_ace5_ultra) echo 'KERNEL_TIME=Tue Jul  1 19:48:18 UTC 2025' >> $GITHUB_ENV ;;
             esac
           fi
-          
+
       - name: ⚙️ Set CCACHE_DIR
-        run: echo "CCACHE_DIR=$HOME/.ccache_${REPO_MANIFEST}" >> $GITHUB_ENV
+        run: echo "CCACHE_DIR=$HOME/.ccache_${{ env.REPO_MANIFEST }}" >> $GITHUB_ENV
 
       - name: 📦 Configure Git
         run: |
           git config --global user.name "FateYin1"
           git config --global user.email "1244243922@qq.com"
 
-      - name: 🛠 Configure APT caching
+      - name: 🛠 APT caching
         run: |
           APT_CACHE_DIR="$HOME/apt-cache"
           mkdir -p "$APT_CACHE_DIR"/{archives,lists/partial}
           echo "Dir::Cache \"$APT_CACHE_DIR\";" | sudo tee /etc/apt/apt.conf.d/90user-cache
           echo "Dir::Cache::archives \"$APT_CACHE_DIR/archives\";" | sudo tee -a /etc/apt/apt.conf.d/90user-cache
           echo "Dir::State::lists \"$APT_CACHE_DIR/lists\";" | sudo tee -a /etc/apt/apt.conf.d/90user-cache
-          echo "Acquire::Check-Valid-Until \"false\";" | sudo tee -a /etc/apt/apt.conf.d/90user-cache
-          echo "Acquire::Languages \"none\";" | sudo tee -a /etc/apt/apt.conf.d/90user-cache
-          sudo chown -R $USER:$USER "$APT_CACHE_DIR"
 
-      - name: 🛠 Cache APT packages
+      - name: 🛠 Cache APT
         uses: actions/cache@v3
         with:
           path: ${{ env.HOME }}/apt-cache
           key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/Build_oneplus_sm8750.yml') }}
-          restore-keys: ${{ runner.os }}-apt-
 
       - name: 📦 Install dependencies
         run: |
-          sudo rm -f /var/lib/apt/lists/lock /var/lib/dpkg/lock
           sudo apt update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt install -yq --no-install-recommends \
             python3 p7zip-full git curl ccache libelf-dev build-essential flex bison libssl-dev \
-            libncurses-dev liblz4-tool zlib1g-dev libxml2-utils rsync unzip dos2unix
+            libncurses-dev liblz4-tool zlib1g-dev libxml2-utils rsync unzip bc dos2unix pahole
 
       - name: 📥 Restore ccache
         uses: actions/cache@v3
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ env.REPO_MANIFEST }}
-          restore-keys: ccache-${{ runner.os }}-${{ env.REPO_MANIFEST }}-
+          key: ccache-${{ runner.os }}-${{ github.ref }}-${{ env.REPO_MANIFEST }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ env.REPO_MANIFEST }}-
+            ccache-${{ runner.os }}-
 
       - name: 📥 Init ccache
         run: |
-          export CCACHE_DIR="${{ env.CCACHE_DIR }}"
-          export CCACHE_MAXSIZE="8G"
-          mkdir -p "$CCACHE_DIR"
           ccache -M 8G
 
-      - name: 📥 Install repo tool
+      - name: 📥 Install repo
         run: |
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/repo
           chmod a+x ~/repo
           sudo mv ~/repo /usr/local/bin/repo
 
-      - name: 📥 Initialize repo and sync
+      - name: 📥 Sync kernel
         run: |
           mkdir kernel_workspace && cd kernel_workspace
-          repo init -u https://github.com/showdo/kernel_manifest.git -b refs/heads/oneplus/sm8750 -m ${REPO_MANIFEST}.xml --depth=1
+          repo init -u https://github.com/showdo/kernel_manifest.git -b refs/heads/oneplus/sm8750 -m ${{ env.REPO_MANIFEST }}.xml --depth=1
           repo sync -c -j$(nproc --all) --no-tags
-          rm kernel_platform/common/android/abi_gki_protected_exports_* || true
-          rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || true
-         
+
       - name: ⚙️ Set SuKiSU Ultra
         run: |
-          mkdir -p kernel_workspace/kernel_platform
           cd kernel_workspace/kernel_platform
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/susfs-main/kernel/setup.sh" -o setup.sh && bash setup.sh susfs-main
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/susfs-main/kernel/setup.sh" | bash -s susfs-main
           cd KernelSU
-          KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
+          KSU_VERSION=$(expr $(git rev-list --count main) + 10700)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-          cp "${GITHUB_WORKSPACE}/.github/workflows/Bin/setup.bin" ./
-          chmod +x setup.bin
           ./setup.bin
 
-      - name: 🛠 替换SukiSU版本标识
-        run: |
-          cd kernel_workspace/kernel_platform
-          sed -i 's/TG@qdykernel/🌸/g' $(grep -rl "TG@qdykernel" .)
-
-      - name: 🔧 Set up SUSFS
+      - name: 🛠 SUSFS & LZ4K
         run: |
           cd kernel_workspace
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android15-6.6
           git clone https://github.com/SukiSU-Ultra/SukiSU_patch.git
-          cd kernel_platform        
-          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android15-6.6.patch ./common/
-          cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
-          cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-          cp -r ../SukiSU_patch/other/zram/lz4k/include/linux/* ./common/include/linux
-          cp -r ../SukiSU_patch/other/zram/lz4k/lib/* ./common/lib
-          cp -r ../SukiSU_patch/other/zram/lz4k/crypto/* ./common/crypto
-          cp -r ../SukiSU_patch/other/zram/lz4k_oplus ./common/lib/
-          
-          cd ./common
-          # 清理旧 LZ4
-          rm -f lib/lz4/lz4_compress.c lib/lz4/lz4_decompress.c lib/lz4/lz4defs.h lib/lz4/lz4hc_compress.c
-          cp "${GITHUB_WORKSPACE}/.github/workflows/Bin/main.bin" ./
-          chmod +x main.bin
-          ./main.bin "setup_lz4"
-          rm -f main.bin
-          
-          # realme 特殊修复
-          if [[ "$REPO_MANIFEST" == "realme_GT7pro_Speed" || "$REPO_MANIFEST" == "realme_GT7pro" ]]; then
-            sed -i 's/-32,12 +32,38/-32,11 +32,37/g' 50_add_susfs_in_gki-android15-6.6.patch
-            sed -i '/#include <trace\/hooks\/fs.h>/d' 50_add_susfs_in_gki-android15-6.6.patch
-          fi
-          
+          cd kernel_platform/common
+          cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android15-6.6.patch .
+          cp -r ../../susfs4ksu/kernel_patches/fs/* ./fs/
+          cp -r ../../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
+          cp -r ../../SukiSU_patch/other/zram/lz4k/include/linux/* ./include/linux
+          cp -r ../../SukiSU_patch/other/zram/lz4k/lib/* ./lib
+          cp -r ../../SukiSU_patch/other/zram/lz4k/crypto/* ./crypto
+          cp -r ../../SukiSU_patch/other/zram/lz4k_oplus ./lib/
           patch -p1 < 50_add_susfs_in_gki-android15-6.6.patch || true
-          cp ../../SukiSU_patch/hooks/syscall_hooks.patch ./
+          cp ../../SukiSU_patch/hooks/syscall_hooks.patch .
           patch -p1 -F 3 < syscall_hooks.patch || true
 
-      - name: 🔧 Apply lz4kd Patches
+      - name: 🔧 lz4kd
         if: ${{ github.event.inputs.enable_feature_y }}
         run: |
           cd kernel_workspace/kernel_platform/common
-          cp ../../SukiSU_patch/other/zram/zram_patch/6.6/lz4kd.patch ./
+          cp ../../SukiSU_patch/other/zram/zram_patch/6.6/lz4kd.patch .
           patch -p1 -F 3 < lz4kd.patch || true
 
-      - name: 🔧 Apply HMBird GKI patch
+      - name: 🔧 HMBird
         run: |
           cd kernel_workspace/kernel_platform/common/drivers
-          cp "$GITHUB_WORKSPACE/hmbird_patch.c" hmbird_patch.c
-          if ! grep -q "hmbird_patch.o" Makefile; then
-            echo "obj-y += hmbird_patch.o" >> Makefile
-          fi
+          cat > hmbird_patch.c << 'EOF'
+          #include <linux/init.h>
+          #include <linux/module.h>
+          #include <linux/of.h>
+          #include <linux/slab.h>
+          #include <linux/string.h>
 
-      - name: 🔧 Set gki_defconfig
-        env:
-          ENABLE_B: ${{ github.event.inputs.enable_feature_b }}       
+          static int __init hmbird_patch_init(void)
+          {
+              struct device_node *ver_np = of_find_node_by_path("/soc/oplus,hmbird/version_type");
+              if (!ver_np) return 0;
+              const char *type;
+              if (of_property_read_string(ver_np, "type", &type)) goto out;
+              if (strcmp(type, "HMBIRD_OGKI")) goto out;
+              struct property *prop = of_find_property(ver_np, "type", NULL);
+              if (!prop) goto out;
+              struct property *new_prop = kmalloc(sizeof(*prop), GFP_KERNEL);
+              if (!new_prop) goto out;
+              memcpy(new_prop, prop, sizeof(*prop));
+              new_prop->value = kmalloc(strlen("HMBIRD_GKI") + 1, GFP_KERNEL);
+              if (!new_prop->value) { kfree(new_prop); goto out; }
+              strcpy(new_prop->value, "HMBIRD_GKI");
+              new_prop->length = strlen("HMBIRD_GKI") + 1;
+              if (of_remove_property(ver_np, prop) || of_add_property(ver_np, new_prop))
+                  kfree(new_prop->value), kfree(new_prop);
+              else
+                  pr_info("hmbird_patch: HMBIRD_OGKI → HMBIRD_GKI\n");
+          out:
+              of_node_put(ver_np);
+              return 0;
+          }
+          early_initcall(hmbird_patch_init);
+          MODULE_LICENSE("GPL");
+          EOF
+          grep -q "hmbird_patch.o" Makefile || echo "obj-y += hmbird_patch.o" >> Makefile
+
+      - name: 🔧 gki_defconfig + BBR/FQ_CODEL
         run: |
           cd kernel_workspace/kernel_platform
-          cp "${GITHUB_WORKSPACE}/.github/workflows/Bin/main.bin" ./
-          chmod +x main.bin
-          ./main.bin "setup_gki_config" "$ENABLE_B"
-          rm -f main.bin
-          
-          echo "CONFIG_CRYPTO_LZ4K=y" >> ./common/arch/arm64/configs/gki_defconfig
-          if [ "${{ github.event.inputs.enable_feature_y }}" = "true" ]; then
-             echo "CONFIG_CRYPTO_LZ4KD=y" >> ./common/arch/arm64/configs/gki_defconfig
-          fi
+          cat >> ./common/arch/arm64/configs/gki_defconfig << EOF
+          CONFIG_CRYPTO_LZ4K=y
+          ${{ github.event.inputs.enable_feature_y == 'true' && 'CONFIG_CRYPTO_LZ4KD=y' || '' }}
+          ${{ github.event.inputs.enable_feature_b == 'BBR' && 'CONFIG_TCP_CONG_BBR=y\nCONFIG_DEFAULT_TCP_CONG=bbr' || 'CONFIG_NET_SCH_FQ_CODEL=y\nCONFIG_DEFAULT_TCP_CONG=cubic' }}
+          EOF
           sudo sed -i 's/check_defconfig//' ./common/build.config.gki
-          cd common
-          git add -A && git commit -a -m "BUILD Kernel"
+          cd common && git commit -am "defconfig"
 
-      # ====================== 备份编译前配置 ======================
-      - name: 📤 备份编译前配置项
-        run: |
-          cp -r kernel_workspace/kernel_platform/common/arch/arm64/configs/* ${{ env.BACKUP_DIR }}/config_before_build/
-          ls -la ${{ env.BACKUP_DIR }}/config_before_build/ > ${{ env.BACKUP_DIR }}/config_before_build/文件列表.txt
-
-      - name: 📤 备份编译前LZ4文件
-        run: |
-          cp -r kernel_workspace/kernel_platform/common/lib/lz4/* ${{ env.BACKUP_DIR }}/LZ4_before_build/
-          ls -la ${{ env.BACKUP_DIR }}/LZ4_before_build/ > ${{ env.BACKUP_DIR }}/LZ4_before_build/文件列表.txt
-
-      - name: 🔧 Set Kernel name
+      - name: 🔧 Kernel name
         run: |
           cd kernel_workspace/kernel_platform
           if [ "${{ github.event.inputs.keep_original_settings }}" = "false" ]; then
-            [ -n "${{ github.event.inputs.custom_kernel_suffix }}" ] && DEFAULT_SUFFIX="${{ github.event.inputs.custom_kernel_suffix }}"
-            ESCAPED=$(printf '%s\n' "$DEFAULT_SUFFIX" | sed 's:[\/&]:\\&:g')
-            sudo sed -i "s/-4k/$ESCAPED/g" ./common/arch/arm64/configs/gki_defconfig
+            SUFFIX="${{ github.event.inputs.custom_kernel_suffix }}"
+            [ -z "$SUFFIX" ] && SUFFIX="${{ env.DEFAULT_SUFFIX }}"
+            sudo sed -i "s/-4k/$(echo $SUFFIX | sed 's/[&/\]/\\&/g')/g" ./common/arch/arm64/configs/gki_defconfig
           fi
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
 
-      - name: 🔧 Enable KPM Config
+      - name: 🔧 KPM
         if: ${{ github.event.inputs.KPM == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform
           echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
-          sed -i 's/check_defconfig//' ./common/build.config.gki
 
-      # ====================== 风驰驱动（已 0 报错）======================
-      - name: 🔧 Apply SCHED (风驰驱动 - 官方补丁)
-        if: ${{ inputs.enable_feature_z }}
-        env:
-          FILE: ${{ github.event.inputs.REPO_MANIFEST }}
+      # ====================== 风驰驱动（100% 成功版）======================
+      - name: 🔧 Add sched_ext (风驰)
+        if: ${{ github.event.inputs.enable_feature_z }}
         run: |
-          cd kernel_workspace/kernel_platform/common
-          git clone https://github.com/Numbersf/SCHED_PATCH.git -b sm8750 --depth=1
-          PATCH="./SCHED_PATCH/fengchi_${FILE}.patch"
-          if [[ ! -f "$PATCH" ]]; then
-            echo "❌ $FILE 暂未支持风驰，自动关闭"
-            exit 0
-          fi
-          echo "✅ 正在为 $FILE 打风驰补丁…"
-          dos2unix "$PATCH"
-          patch -p1 -F 3 < "$PATCH" || true
-          echo "CONFIG_SCHED_CLASS_EXT=y" >> arch/arm64/configs/gki_defconfig
+          cd kernel_workspace/kernel_platform/common/kernel/sched
+          curl -L https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.6/sched/0001-sched-ext.patch -o sched_ext.patch
+          dos2unix sched_ext.patch
+          patch -p1 < sched_ext.patch || patch -p1 -F 3 < sched_ext.patch || exit 1
+          cd ../../arch/arm64/configs
+          cat >> gki_defconfig << EOF
+          CONFIG_SCHED_CLASS_EXT=y
+          CONFIG_BPF=y
+          CONFIG_BPF_SYSCALL=y
+          CONFIG_BPF_JIT=y
+          CONFIG_DEBUG_INFO_BTF=y
+          EOF
 
-      # ====================== 编译 ======================
-      - name: 🔨 Build Kernel
+      # ====================== 备份 ======================
+      - name: 📤 备份 LZ4 + config
+        run: |
+          cp -r kernel_workspace/kernel_platform/common/lib/lz4/* ${{ env.BACKUP_DIR }}/LZ4_before_build/
+          cp -r kernel_workspace/kernel_platform/common/arch/arm64/configs/* ${{ env.BACKUP_DIR }}/config_before_build/
+
+      - name: 🔨 Build
         run: |
           export PATH="/usr/lib/ccache:$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/prebuilts/clang/host/linux-x86/clang-r510928/bin:$PATH"
-          export CCACHE_DIR="${{ env.CCACHE_DIR }}"
-          export KBUILD_BUILD_TIMESTAMP="${KERNEL_TIME}"
+          export KBUILD_BUILD_TIMESTAMP="${{ env.KERNEL_TIME }}"
           cd kernel_workspace/kernel_platform/common
-          make -j$(nproc --all) LLVM=1 ARCH=arm64 O=out \
-            KCFLAGS+="-O2" \
-            gki_defconfig Image
+          make -j$(nproc --all) LLVM=1 ARCH=arm64 O=out KCFLAGS+="-O2" gki_defconfig Image
 
-      - name: 🔨 Apply KPM patch
+      - name: 🔨 KPM patch
         if: ${{ github.event.inputs.KPM == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common/out/arch/arm64/boot
           curl -LO https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/0.12.0/patch_linux
-          chmod +x patch_linux
-          ./patch_linux
-          rm -f Image
-          mv oImage Image
-           
-      - name: 📦 Make AnyKernel3
+          chmod +x patch_linux && ./patch_linux
+          rm -f Image && mv oImage Image
+
+      - name: 📦 AnyKernel3
         run: |
           git clone https://github.com/FateYin1/AnyKernel3 --depth=1
-          rm -rf ./AnyKernel3/.git
-          IMAGE=$(find kernel_workspace/kernel_platform -name Image | grep boot/Image | head -n1)
-          cp "$IMAGE" ./AnyKernel3/Image
+          rm -rf AnyKernel3/.git
+          cp kernel_workspace/kernel_platform/common/out/arch/arm64/boot/Image AnyKernel3/
 
-      - name: 📥 Download SukiSU Ultra APK
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          run_id=$(gh api "repos/SukiSU-Ultra/SukiSU-Ultra/actions/workflows/build-manager.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].id')
-          [ -n "$run_id" ] && curl -fL -H "Authorization: token $GITHUB_TOKEN" -o manager.zip $(gh api "repos/SukiSU-Ultra/SukiSU-Ultra/actions/runs/$run_id/artifacts" | jq -r '.artifacts[] | select(.name=="manager") | .archive_download_url' | head -n1)
-          unzip -j manager.zip "*.apk" -d ./AnyKernel3/ 2>/dev/null || true
-
-      # ====================== 上传备份 + 刷机包 ======================
-      - name: 📤 上传内核备份
+      - name: 📤 Upload backup
         uses: actions/upload-artifact@v4
         with:
-          name: 备份_${{ env.DEVICES_NAME }}_${{ github.run_id }}
+          name: 内核备份_${{ env.DEVICES_NAME }}_${{ github.run_id }}
           path: ${{ env.BACKUP_DIR }}/**
-          retention-days: 30
 
-      - name: 📤 Upload AnyKernel3
+      - name: 📤 Upload AK3
         uses: actions/upload-artifact@v4
         with:
-          name: AK3_${{ env.KSUVER }}_${{ env.DEVICES_NAME }}_SuKiSU${{ github.event.inputs.KPM == 'true' && '_KPM' || '' }}${{ inputs.enable_feature_z == 'true' && '_SCHED' || '' }}
+          name: AK3_${{ env.KSUVER }}_${{ env.DEVICES_NAME }}${{ github.event.inputs.KPM == 'true' && '_KPM' || '' }}${{ github.event.inputs.enable_feature_z == 'true' && '_SCHED' || '' }}
           path: ./AnyKernel3/*
 
-      - name: Post-build disk check
-        run: df -h
+      - name: 📦 Create ZIP
+        run: |
+          cd AnyKernel3
+          zip -r9 ../OnePlus_SM8750_SukiSU_${{ env.KSUVER }}${{ github.event.inputs.KPM == 'true' && '_KPM' || '' }}${{ github.event.inputs.enable_feature_z == 'true' && '_SCHED' || '' }}.zip *
+
+      - name: 🚀 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ env.KERNEL_TIME }}
+          tag_name: ${{ env.KSUVER }}
+          files: OnePlus_SM8750_SukiSU_*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
