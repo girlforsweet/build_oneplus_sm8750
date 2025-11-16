@@ -72,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 保留第一个 checkout 步骤，以便拉取完整历史记录用于后续操作
+          fetch-depth: 0 
 
       - name: ⚙️ Set REPO_MANIFEST (设置对应机型配置文件)
         run: |
@@ -158,8 +158,6 @@ jobs:
           remove-android: 'true'
           remove-haskell: 'true'
           remove-codeql: 'true'
-          
-      # ⚠️ 冗余的 actions/checkout@v4 步骤已移除
 
       - name: ⚙️ Set device-specific CCACHE_DIR (设置对应机型Cceche路径)
         run: |
@@ -289,18 +287,19 @@ jobs:
           
       - name: 🛠 替换SukiSU版本标识为🌸
         run: |
-         cd kernel_workspace/kernel_platform
-         # 搜索并替换 SukiSU 源码中可能存在的标识符
-         TARGET_FILES=$(grep -rl "TG@qdykernel" . || true)
-          if [ -n "$TARGET_FILES" ]; then
-            echo "发现需要替换的标识文件："
-            echo "$TARGET_FILES"
-            sed -i 's/TG@qdykernel/🌸/g' $TARGET_FILES
-            echo "✅ 标识替换完成：TG@qdykernel -> 🌸"
-          else
-            echo "⚠️ 未找到目标标识文件 TG@qdykernel，跳过替换"
-          fi
-
+         cd kernel_workspace
+         echo "正在全局搜索并替换SukiSU版本标识..."
+         # 使用 find 查找所有文件，然后通过 xargs 配合 sed 进行替换，确保替换覆盖所有相关文件
+         find . -type f -not -path "./.git/*" -exec grep -l "TG@qdykernel" {} \; | xargs -r sed -i 's/TG@qdykernel/🌸/g'
+         
+         # 再次检查是否有文件被替换（可选，用于调试）
+         TARGET_COUNT=$(find . -type f -not -path "./.git/*" -exec grep -l "TG@qdykernel" {} \; | wc -l)
+         if [ "$TARGET_COUNT" -eq 0 ]; then
+           echo "✅ 标识替换完成：TG@qdykernel -> 🌸 (替换后的文件数: 0)"
+         else
+           echo "⚠️ 替换失败或部分文件未替换。剩余 $TARGET_COUNT 个文件包含 TG@qdykernel"
+           exit 1
+         fi
             
       - name: 🔧 Set up SUSFS (配置 SUSFS)
         run: |
