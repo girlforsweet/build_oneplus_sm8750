@@ -1,4 +1,4 @@
-Name: Build_oneplus_sm8750
+name: Build_oneplus_sm8750
 on:
   workflow_dispatch:
     inputs:
@@ -72,8 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
-
+          fetch-depth: 0
       - name: ⚙️ Set REPO_MANIFEST (设置对应机型配置文件)
         run: |
           case "${{ env.DEVICES_NAME }}" in
@@ -158,7 +157,10 @@ jobs:
           remove-android: 'true'
           remove-haskell: 'true'
           remove-codeql: 'true'
-
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          
       - name: ⚙️ Set device-specific CCACHE_DIR (设置对应机型Cceche路径)
         run: |
           echo "CCACHE_DIR=$HOME/.ccache_${REPO_MANIFEST}" >> $GITHUB_ENV
@@ -284,22 +286,7 @@ jobs:
             exit 1
           fi
           ./setup.bin
-          
-      - name: 🛠 替换SukiSU版本标识为🌸
-        run: |
-         cd kernel_workspace
-         echo "正在全局搜索并替换SukiSU版本标识..."
-         # 使用 find 查找所有文件，然后通过 xargs 配合 sed 进行替换，确保替换覆盖所有相关文件
-         find . -type f -not -path "./.git/*" -exec grep -l "TG@qdykernel" {} \; | xargs -r sed -i 's/TG@qdykernel/🌸/g'
-         
-         # 再次检查是否有文件被替换（可选，用于调试）
-         TARGET_COUNT=$(find . -type f -not -path "./.git/*" -exec grep -l "TG@qdykernel" {} \; | wc -l)
-         if [ "$TARGET_COUNT" -eq 0 ]; then
-           echo "✅ 标识替换完成：TG@qdykernel -> 🌸 (替换后的文件数: 0)"
-         else
-           echo "⚠️ 替换失败或部分文件未替换。剩余 $TARGET_COUNT 个文件包含 TG@qdykernel"
-           exit 1
-         fi
+
             
       - name: 🔧 Set up SUSFS (配置 SUSFS)
         run: |
